@@ -23,13 +23,14 @@ import {
 import "./joblistings.css";
 import Hero from "./hero";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchJobs , uploadProfilePic } from "../redux/jobs/jobactions";
+import { fetchJobs, uploadProfilePic } from "../redux/jobs/jobactions";
 import Addjob from "../component/addjob";
+import Userjobs from "../component/userjobs";
 import { logout } from "../redux/auth/authactions";
 
 const Joblistings = () => {
   const dispatch = useDispatch();
-  const jobs = useSelector((state) => state.job.job);
+  const jobs = useSelector((state) => state.job.allJobs);
   const user = useSelector((state) => state.auth.user);
 
   // Filter states
@@ -88,80 +89,77 @@ const Joblistings = () => {
     setOrder("asc");
 
     // Fetch all jobs for the user again
-    if (user?.id) {
-      dispatch(fetchJobs({ userId: user.id }));
-    }
+    dispatch(fetchJobs({}));
   };
 
   // Initial fetch when component mounts
-  useEffect(() => {
-    if (user?.id) {
-      dispatch(fetchJobs({ userId: user.id }));
-    }
-  }, [user, dispatch]);
+ useEffect(() => {
+  dispatch(fetchJobs({})); // ✅ no userId → fetch ALL jobs
+}, [dispatch]);
 
   return (
     <>
       <div className="px-5 bg-dark py-2 ">
-  <Navbar color="dark" dark expand="md">
-    <NavbarBrand href="/" className="me-auto text-light">
-      <h4>JobsHub!</h4>
-    </NavbarBrand>
-    <NavbarToggler onClick={toggleNavbar} className="me-2" />
-    <Collapse isOpen={!collapsed} navbar>
-      <Nav navbar className="ms-auto d-flex align-items-center">
-
-        {/* 🔹 Hidden File Input */}
-        <input
-          type="file"
-          id="profilePic"
-          accept="image/*"
-          style={{ display: "none" }}
-          onChange={(e) => {
-            if (e.target.files[0]) {
-              dispatch(uploadProfilePic(e.target.files[0]));
-            }
-          }}
-        />
-
-        {/* 🔹 Label acts as clickable Profile Pic */}
-        <NavItem className="d-flex align-items-center me-3">
-          <label htmlFor="profilePic" style={{ cursor: "pointer", margin: 0 }}>
-            {user?.profilePic ? (
-              <img
-                src={user.profilePic}
-                alt="Profile"
-                style={{
-                  width: "40px",
-                  height: "40px",
-                  borderRadius: "50%",
-                  objectFit: "cover",
+        <Navbar color="dark" dark expand="md">
+          <NavbarBrand href="/" className="me-auto text-light">
+            <h4>JobsHub!</h4>
+          </NavbarBrand>
+          <NavbarToggler onClick={toggleNavbar} className="me-2" />
+          <Collapse isOpen={!collapsed} navbar>
+            <Nav navbar className="ms-auto d-flex align-items-center">
+              {/* 🔹 Hidden File Input */}
+              <input
+                type="file"
+                id="profilePic"
+                accept="image/*"
+                style={{ display: "none" }}
+                onChange={(e) => {
+                  if (e.target.files[0]) {
+                    dispatch(uploadProfilePic(e.target.files[0]));
+                  }
                 }}
               />
-            ) : (
-              <FaUserCircle size={40} color="gray" />
-            )}
-          </label>
-        </NavItem>
 
-        {/* Logout Button */}
-        <NavItem>
-          <NavLink
-            href="#"
-            onClick={(e) => {
-              e.preventDefault(); // stop page refresh
-              dispatch(logout());
-            }}
-            className="text-danger"
-          >
-            Logout
-          </NavLink>
-        </NavItem>
-      </Nav>
-    </Collapse>
-  </Navbar>
-</div>
+              {/* 🔹 Label acts as clickable Profile Pic */}
+              <NavItem className="d-flex align-items-center me-3">
+                <label
+                  htmlFor="profilePic"
+                  style={{ cursor: "pointer", margin: 0 }}
+                >
+                  {user?.profilePic ? (
+                    <img
+                      src={user.profilePic}
+                      alt="Profile"
+                      style={{
+                        width: "40px",
+                        height: "40px",
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                      }}
+                    />
+                  ) : (
+                    <FaUserCircle size={40} color="gray" />
+                  )}
+                </label>
+              </NavItem>
 
+              {/* Logout Button */}
+              <NavItem>
+                <NavLink
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault(); // stop page refresh
+                    dispatch(logout());
+                  }}
+                  className="text-danger"
+                >
+                  Logout
+                </NavLink>
+              </NavItem>
+            </Nav>
+          </Collapse>
+        </Navbar>
+      </div>
 
       <div>
         <Card inverse>
@@ -200,10 +198,12 @@ const Joblistings = () => {
                 </h5>
               </CardText>
               <CardText>
-                {/* <Button color="light" onClick={toggle} className="d-flex justify-content-center">
-            Post a Job
-          </Button> */}
                 <div className="d-flex justify-content-center mt-5">
+                  <Userjobs />
+                </div>
+              </CardText>
+              <CardText>
+                <div className="d-flex justify-content-center mt-2">
                   <Button
                     onClick={toggle}
                     outline
@@ -284,7 +284,7 @@ const Joblistings = () => {
                       outline
                       color="light"
                       disabled={!hasFilters}
-                      className="fw-bold px-3 py-2"
+                      className="fw-bold px-3 py-2 mb-3"
                     >
                       Apply Filter
                     </Button>
@@ -293,7 +293,7 @@ const Joblistings = () => {
                       outline
                       color="light"
                       disabled={!hasFilters}
-                      className="fw-bold px-3 py-2"
+                      className="fw-bold px-3 py-2 mb-3"
                     >
                       Reset Filters
                     </Button>
@@ -304,7 +304,6 @@ const Joblistings = () => {
           </div>
         </Card>
       </div>
-
 
       {/* Job Table */}
       <div className="p-3 bg-secondary">

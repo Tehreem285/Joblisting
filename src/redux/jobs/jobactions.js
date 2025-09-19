@@ -1,6 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { db , storage , auth } from "../../firebase/firebase"; 
-import { setJob ,  addJob as addJobToState } from "./jobslice";
+import { setAllJobs ,  addJob as addJobToState } from "./jobslice";
 import { addDoc, collection, serverTimestamp , where , query , getDocs, orderBy , doc, updateDoc } from "firebase/firestore";
  import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
@@ -78,12 +78,18 @@ export const fetchJobs = createAsyncThunk(
   "job/fetchJobs",
   async (filters, thunkAPI) => {
     try {
-      const { userId, title, jobType, location, salary, field, order } = filters;
+      const { title, jobType, location, salary, field, order } = filters;
 
-      if (!userId) return; // Only fetch for logged-in users
+      // if (!userId) return; // Only fetch for logged-in users
 
       const jobsRef = collection(db, "jobs");
-      const constraints = [where("userId", "==", userId)]; // Always filter by user
+      const constraints = [];
+
+      // ✅ If userId is provided → fetch only that user's jobs
+      // if (userId) {
+      //   constraints.push(where("userId", "==", userId));
+      // }
+       // Always filter by user
 
       // For Firestore limitations with text search, we'll fetch all user jobs
       // and filter on the client side for better text matching
@@ -123,7 +129,7 @@ export const fetchJobs = createAsyncThunk(
         );
       }
 
-      thunkAPI.dispatch(setJob(jobs));
+      thunkAPI.dispatch(setAllJobs(jobs));
       return jobs;
     } catch (error) {
       console.error("Failed to fetch jobs:", error);
