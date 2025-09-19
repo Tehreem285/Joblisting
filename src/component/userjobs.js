@@ -3,8 +3,9 @@ import { useSelector } from "react-redux";
 import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Table } from "reactstrap";
 
 const Userjobs = () => {
-  const jobs = useSelector((state) => state.job.userJobs);
+  const jobs = useSelector((state) => state.job.allJobs);
   const user = useSelector((state) => state.auth.user);
+  console.log("jobs are" , jobs);
 
   const [modal, setModal] = useState(false);
   const toggle = () => setModal(!modal);
@@ -15,7 +16,7 @@ const Userjobs = () => {
   return (
     <>
       <Button onClick={toggle} outline color="light">
-        Click Me
+       My Jobs
       </Button>
       <Modal isOpen={modal} toggle={toggle} fullscreen>
         <ModalHeader toggle={toggle}>My Jobs</ModalHeader>
