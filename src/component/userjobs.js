@@ -1,17 +1,21 @@
-import React, { useState } from "react";
-import { useSelector } from "react-redux";
+import React, { useState , useEffect } from "react";
+import { useSelector , useDispatch } from "react-redux";
 import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Table } from "reactstrap";
+import { getJob } from "../redux/jobs/jobactions";
 
 const Userjobs = () => {
   const jobs = useSelector((state) => state.job.allJobs);
   const user = useSelector((state) => state.auth.user);
-  console.log("jobs are" , jobs);
+ const dispatch = useDispatch()
 
   const [modal, setModal] = useState(false);
   const toggle = () => setModal(!modal);
 
-  // Filter jobs for the logged-in user
-  const userJobs = jobs.filter((job) => job.userId === user?.id);
+  useEffect(() => {
+  if (user?.id) {
+    dispatch(getJob(user.id)); // ✅ only fetch current user’s jobs
+  }
+}, [dispatch, user]);
 
   return (
     <>
@@ -34,8 +38,8 @@ const Userjobs = () => {
                 </tr>
               </thead>
               <tbody>
-                {userJobs.length > 0 ? (
-                  userJobs.map((job, index) => (
+                {jobs.length > 0 ? (
+                  jobs.map((job, index) => (
                     <tr key={job.id}>
                       <td>{index + 1}</td>
                       <td>{job.title}</td>
