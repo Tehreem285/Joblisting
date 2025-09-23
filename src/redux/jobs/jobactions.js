@@ -1,6 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { db , storage , auth } from "../../firebase/firebase"; 
-import { setAllJobs ,  addJob as addJobToState } from "./jobslice";
+import { setAllJobs , setUserJobs, addJob as addJobToState } from "./jobslice";
 import { addDoc, collection, serverTimestamp , where , query , getDocs, orderBy , doc, updateDoc } from "firebase/firestore";
  import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
@@ -65,7 +65,7 @@ export const getJob = createAsyncThunk(
         id: doc.id,
         ...doc.data(),
       }));
-
+        thunkAPI.dispatch(setUserJobs(jobs));
       return jobs; 
     } catch (error) {
       return thunkAPI.rejectWithValue("Failed to fetch jobs");

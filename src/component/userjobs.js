@@ -4,7 +4,7 @@ import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Table } from "react
 import { getJob } from "../redux/jobs/jobactions";
 
 const Userjobs = () => {
-  const jobs = useSelector((state) => state.job.allJobs);
+  const jobs = useSelector((state) => state.job.userJobs);
   const user = useSelector((state) => state.auth.user);
  const dispatch = useDispatch()
 

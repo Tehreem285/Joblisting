@@ -23,6 +23,11 @@ const authslice = createSlice({
         setChecking: (state , action) => {
             state.checking = action.payload;
         },
+        setProfilePic: (state, action) => {
+      if (state.user) {
+        state.user.profilePic = action.payload;
+      }
+    },
     },
 });
 

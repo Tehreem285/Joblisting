@@ -18,10 +18,8 @@ import {
   Card,
   CardTitle,
   CardText,
-  CardLink,
 } from "reactstrap";
 import "./joblistings.css";
-import Hero from "./hero";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchJobs, uploadProfilePic } from "../redux/jobs/jobactions";
 import Addjob from "../component/addjob";
@@ -39,6 +37,8 @@ const Joblistings = () => {
   const [location, setLocation] = useState("");
   const [status, setStatus] = useState("");
   const [salary, setSalary] = useState("");
+  const [imageurl, setimageurl] = useState("");
+
 
   // Sorting states
   const [field, setField] = useState("");
