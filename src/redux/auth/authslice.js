@@ -23,13 +23,13 @@ const authslice = createSlice({
         setChecking: (state , action) => {
             state.checking = action.payload;
         },
-        setProfilePic: (state, action) => {
-      if (state.user) {
-        state.user.profilePic = action.payload;
-      }
-    },
+       setProfilePic: (state, action) => {    
+  if (state.user) {
+    state.user.profilePic = action.payload;
+  }
+},
     },
 });
 
-export const {setUser , clearUser , setLoader, setChecking} = authslice.actions;
+export const {setUser , clearUser , setLoader, setChecking, setProfilePic} = authslice.actions;
 export default authslice.reducer;

@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { Link }  from "react-router-dom";
+import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
 import { FaUserCircle } from "react-icons/fa";
 import {
   Table,
@@ -25,11 +27,15 @@ import { fetchJobs, uploadProfilePic } from "../redux/jobs/jobactions";
 import Addjob from "../component/addjob";
 import Userjobs from "../component/userjobs";
 import { logout } from "../redux/auth/authactions";
+import { setProfilePic } from "../redux/auth/authslice"; // ✅ import slice action
 
 const Joblistings = () => {
   const dispatch = useDispatch();
   const jobs = useSelector((state) => state.job.allJobs);
   const user = useSelector((state) => state.auth.user);
+
+  // Local state for instant preview of uploaded pic
+  const [imageurl, setImageurl] = useState(null);
 
   // Filter states
   const [title, setTitle] = useState("");
@@ -37,8 +43,6 @@ const Joblistings = () => {
   const [location, setLocation] = useState("");
   const [status, setStatus] = useState("");
   const [salary, setSalary] = useState("");
-  const [imageurl, setimageurl] = useState("");
-
 
   // Sorting states
   const [field, setField] = useState("");
@@ -48,9 +52,28 @@ const Joblistings = () => {
   const [modal, setModal] = useState(false);
   const toggle = () => setModal(!modal);
 
-  const [collapsed, setCollapsed] = useState(true);
+ const [isOpen, setIsOpen] = useState(false);
+const toggleNavbar = () => setIsOpen(!isOpen);
+  
+  // ✅ Profile Pic Upload Handler
+  const handleProfilePicUpload = async (e) => {
+    if (e.target.files[0]) {
+      try {
+        // Upload to Firebase
+        const downloadURL = await dispatch(
+          uploadProfilePic(e.target.files[0])
+        ).unwrap();
 
-  const toggleNavbar = () => setCollapsed(!collapsed);
+        // Update local preview
+        setImageurl(downloadURL);
+
+        // Update Redux (so it persists globally)
+        dispatch(setProfilePic(downloadURL));
+      } catch (error) {
+        console.error("Profile pic upload failed:", error);
+      }
+    }
+  };
 
   // Apply filters
   const applyFilters = () => {
@@ -88,83 +111,87 @@ const Joblistings = () => {
     setField("");
     setOrder("asc");
 
-    // Fetch all jobs for the user again
     dispatch(fetchJobs({}));
   };
 
   // Initial fetch when component mounts
- useEffect(() => {
-  dispatch(fetchJobs({})); // ✅ no userId → fetch ALL jobs
-}, [dispatch]);
+  useEffect(() => {
+    dispatch(fetchJobs({}));
+  }, [dispatch]);
 
   return (
     <>
       <div className="px-5 bg-dark py-2 ">
-        <Navbar color="dark" dark expand="md">
-          <NavbarBrand href="/" className="me-auto text-light">
-            <h4>JobsHub!</h4>
-          </NavbarBrand>
-          <NavbarToggler onClick={toggleNavbar} className="me-2" />
-          <Collapse isOpen={!collapsed} navbar>
-            <Nav navbar className="ms-auto d-flex align-items-center">
-              {/* 🔹 Hidden File Input */}
-              <input
-                type="file"
-                id="profilePic"
-                accept="image/*"
-                style={{ display: "none" }}
-                onChange={(e) => {
-                  if (e.target.files[0]) {
-                    dispatch(uploadProfilePic(e.target.files[0]));
-                  }
-                }}
-              />
+        <Navbar color="dark" dark >
+  <NavbarBrand href="/" className="me-auto text-light">
+    <h4>JobsHub!</h4>
+  </NavbarBrand>
 
-              {/* 🔹 Label acts as clickable Profile Pic */}
-              <NavItem className="d-flex align-items-center me-3">
-                <label
-                  htmlFor="profilePic"
-                  style={{ cursor: "pointer", margin: 0 }}
-                >
-                  {user?.profilePic ? (
-                    <img
-                      src={user.profilePic}
-                      alt="Profile"
-                      style={{
-                        width: "40px",
-                        height: "40px",
-                        borderRadius: "50%",
-                        objectFit: "cover",
-                      }}
-                    />
-                  ) : (
-                    <FaUserCircle size={40} color="gray" />
-                  )}
-                </label>
-              </NavItem>
+  {/* ✅ Profile picture always visible */}
+  <div className="d-flex align-items-center me-3">
+    <input
+      type="file"
+      id="profilePic"
+      accept="image/*"
+      style={{ display: "none" }}
+      onChange={handleProfilePicUpload}
+    />
 
-              {/* Logout Button */}
-              <NavItem>
-                <NavLink
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault(); // stop page refresh
-                    dispatch(logout());
-                  }}
-                  className="text-danger"
-                >
-                  Logout
-                </NavLink>
-              </NavItem>
-            </Nav>
-          </Collapse>
-        </Navbar>
+    <label
+      htmlFor="profilePic"
+      style={{ cursor: "pointer", margin: 0 }}
+    >
+      {imageurl || user?.profilePic ? (
+        <img
+          src={imageurl || user?.profilePic}
+          alt="Profile"
+          style={{
+            width: "40px",
+            height: "40px",
+            borderRadius: "50%",
+            objectFit: "cover",
+          }}
+        />
+      ) : (
+        <FaUserCircle size={40} color="gray" />
+      )}
+    </label>
+  </div>
+
+  {/* Navbar toggler */}
+  <NavbarToggler onClick={toggleNavbar} className="me-2" />
+
+  {/* ✅ Collapsible menu (only Logout inside) */}
+  <Collapse isOpen={isOpen} navbar>
+    <Nav navbar className="ms-auto">
+      <NavItem>
+      <NavLink tag={Link} to="/userjobs"> 
+       My Jobs
+      </NavLink>
+    </NavItem>
+
+      <NavItem>
+        <NavLink
+          href="#"
+          onClick={(e) => {
+            e.preventDefault();
+            dispatch(logout());
+          }}
+          className="text-danger"
+        >
+          Logout
+        </NavLink>
+      </NavItem>
+    </Nav>
+  </Collapse>
+</Navbar>
+
       </div>
 
+      {/* Background Card Section */}
       <div>
         <Card inverse>
           <div style={{ position: "relative" }}>
-            {/* Background Image */}
             <CardImg
               alt="Card image cap"
               src="/images/hero.jpg"
@@ -174,7 +201,6 @@ const Joblistings = () => {
                 objectFit: "cover",
               }}
             />
-            {/* Dark Overlay with Opacity */}
             <div
               style={{
                 position: "absolute",
@@ -183,10 +209,9 @@ const Joblistings = () => {
                 width: "100%",
                 height: "100%",
                 backgroundColor: "black",
-                opacity: 0.5, // controls image darkness
+                opacity: 0.5,
               }}
             ></div>
-            {/* Overlay Text */}
             <CardImgOverlay>
               <CardTitle className="text-center mt-5 pt-4">
                 <h1>Welcome to JobsHub!</h1>
@@ -197,13 +222,13 @@ const Joblistings = () => {
                   grip on firebase concepts.
                 </h5>
               </CardText>
-              <CardText>
+              {/* <CardText>
                 <div className="d-flex justify-content-center mt-5">
                   <Userjobs />
                 </div>
-              </CardText>
+              </CardText> */}
               <CardText>
-                <div className="d-flex justify-content-center mt-2">
+                <div className="d-flex justify-content-center mt-4">
                   <Button
                     onClick={toggle}
                     outline
@@ -339,7 +364,16 @@ const Joblistings = () => {
             )}
           </tbody>
         </Table>
+      {/* <div className="d-flex justify-content-end mt-3 gap-2">
+    <Button outline color="light" className="fw-bold">
+      <FaArrowLeft className="me-2" /> Previous
+    </Button>
+    <Button outline color="light" className="fw-bold">
+      Next <FaArrowRight className="ms-2" />
+    </Button>
+  </div> */}
       </div>
+
 
       <Addjob modal={modal} toggle={toggle} />
     </>

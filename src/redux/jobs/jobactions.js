@@ -1,8 +1,10 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { db , storage , auth } from "../../firebase/firebase"; 
-import { setAllJobs , setUserJobs, addJob as addJobToState } from "./jobslice";
-import { addDoc, collection, serverTimestamp , where , query , getDocs, orderBy , doc, updateDoc } from "firebase/firestore";
+import { setAllJobs , setUserJobs, addJob as addJobToState , removeJob } from "./jobslice";
+import { addDoc, collection, serverTimestamp , where , query , getDocs, orderBy , doc, updateDoc , deleteDoc } from "firebase/firestore";
  import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+ import { updateProfile } from "firebase/auth";
+import { setProfilePic } from "../auth/authslice";
 
 /**
  * Action to add a new job to Firestore.
@@ -20,7 +22,7 @@ export const addJob = createAsyncThunk(
       const docRef = await addDoc(collection(db, "jobs"), {
         title,
         location,
-        salary,
+        salary: Number(salary),
         isactive,
         type,
         userId,
@@ -138,27 +140,48 @@ export const fetchJobs = createAsyncThunk(
   }
 );
 
+export const deleteJob = createAsyncThunk(
+  "job/deleteJob",
+  async (jobId, thunkAPI) => {
+    try {
+      const jobRef = doc(db, "jobs", jobId);
+      await deleteDoc(jobRef);
+      thunkAPI.dispatch(removeJob(jobId));
+      return jobId; // ✅ return id so reducer can remove it
+    } catch (error) {
+      console.error("Delete failed:", error);
+      return thunkAPI.rejectWithValue("Failed to delete job");
+    }
+  }
+);
+
+
 export const uploadProfilePic = createAsyncThunk(
   "job/uploadProfilePic",
-  async (file, { rejectWithValue }) => {
+  async (file, { rejectWithValue, dispatch }) => {
     try {
-      const uid = auth.currentUser.uid; // ✅ get logged-in user ID
+      const uid = auth.currentUser.uid;
       const storageRef = ref(storage, `profilePics/${uid}.jpg`);
 
-      // 1. Upload file to Firebase Storage
+      // 1. Upload file
       await uploadBytes(storageRef, file);
 
       // 2. Get download URL
       const downloadURL = await getDownloadURL(storageRef);
 
-      // 3. Save URL in Firestore under the user's document
+      // 3. Save in Firestore
       await updateDoc(doc(db, "users", uid), {
-        profilePic: downloadURL
+        profilePic: downloadURL,
       });
 
-      return downloadURL; // return so component can update UI if needed
+      await updateProfile(auth.currentUser, {
+        photoURL: downloadURL,
+      });
+      dispatch(setProfilePic(downloadURL));
+      return downloadURL;
     } catch (error) {
       return rejectWithValue(error.message);
     }
   }
 );
+

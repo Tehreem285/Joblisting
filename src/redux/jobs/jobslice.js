@@ -24,10 +24,11 @@ const jobslice = createSlice({
       state.userJobs = [...state.userJobs, action.payload];
     },
      removeJob: (state, action) => {
-  state.job = state.job.filter(job => job.id !== action.payload);
-},
+      state.allJobs = state.allJobs.filter((job) => job.id !== action.payload);
+      state.userJobs = state.userJobs.filter((job) => job.id !== action.payload);
+    },
   },
 })
 
-export const {setAllJobs ,setUserJobs, addJob} = jobslice.actions;
+export const {setAllJobs ,setUserJobs, addJob , removeJob} = jobslice.actions;
 export default jobslice.reducer;

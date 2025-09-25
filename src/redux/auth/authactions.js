@@ -13,10 +13,11 @@ export const signup = createAsyncThunk(
            dispatch(setLoader(true)) 
            const user = await createUserWithEmailAndPassword(auth , email ,password);
            if (user) {
-        await setDoc(doc(db, "users", user.user.uid), { email });
+        await setDoc(doc(db, "users", user.user.uid), { email , profilePic: null });
         dispatch(setUser({
           id: user.user.uid,    
-          email: email
+          email: email,
+          profilePic : null,
         }));
       
             dispatch(setLoader(false));
@@ -37,11 +38,14 @@ export const login = createAsyncThunk(
       dispatch(setLoader(true));
       const user = await signInWithEmailAndPassword(auth, email, password);
       const userdoc = await getDoc(doc(db, "users", user.user.uid));
-      if (userdoc.exists()) {
-       dispatch(setUser({
-  id: user.user.uid,
-  email: user.user.email
-}));
+     if (userdoc.exists()) {
+        const userData = userdoc.data();  // ✅ get Firestore user data
+
+        dispatch(setUser({
+          id: user.user.uid,
+          email: user.user.email,
+          profilePic: userData.profilePic || null,  // ✅ now safe
+        }));
  dispatch(setLoader(false)); // ✅ stop loader
                 toast.success(" Login successful!"); // ✅ toast
       } else {
