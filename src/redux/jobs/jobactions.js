@@ -1,10 +1,11 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { db , storage , auth } from "../../firebase/firebase"; 
 import { setAllJobs , setUserJobs, addJob as addJobToState , removeJob } from "./jobslice";
-import { addDoc, collection, serverTimestamp , where , query , getDocs, orderBy , doc, updateDoc , deleteDoc } from "firebase/firestore";
+import { addDoc, collection, serverTimestamp ,limit, startAfter, where , query , getDocs, orderBy , doc, updateDoc , deleteDoc } from "firebase/firestore";
  import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
  import { updateProfile } from "firebase/auth";
-import { setProfilePic } from "../auth/authslice";
+ import { setProfilePic } from "../auth/authslice";
+
 
 /**
  * Action to add a new job to Firestore.
@@ -76,38 +77,35 @@ export const getJob = createAsyncThunk(
 );
 
 
+
+
 export const fetchJobs = createAsyncThunk(
   "job/fetchJobs",
-  async (filters, thunkAPI) => {
+  async ({ filters = {}, lastDoc = null, loadMore = false, limitNum = 10 }, thunkAPI) => {
     try {
+      // Step 1: Extract filters
       const { title, jobType, location, salary, field, order } = filters;
 
-      // if (!userId) return; // Only fetch for logged-in users
-
+      // Step 2: Setup Firestore ref and constraints
       const jobsRef = collection(db, "jobs");
-      const constraints = [];
+      let constraints = [];
 
-      // ✅ If userId is provided → fetch only that user's jobs
-      // if (userId) {
-      //   constraints.push(where("userId", "==", userId));
-      // }
-       // Always filter by user
-
-      // For Firestore limitations with text search, we'll fetch all user jobs
-      // and filter on the client side for better text matching
-      
-      // Only add server-side filters for exact matches and ranges
       if (jobType) constraints.push(where("type", "==", jobType.toLowerCase()));
       if (salary) constraints.push(where("salary", ">=", Number(salary)));
 
-      // Dynamic sorting
       if (field) {
         constraints.push(orderBy(field, order || "asc"));
       } else {
-        // Default sorting by creation date
         constraints.push(orderBy("createdAt", "desc"));
       }
 
+      if (loadMore && lastDoc) {
+        constraints.push(startAfter(lastDoc));
+      }
+
+      constraints.push(limit(limitNum));
+
+      // Step 3: Fetch jobs
       const q = query(jobsRef, ...constraints);
       const snapshot = await getDocs(q);
 
@@ -116,23 +114,33 @@ export const fetchJobs = createAsyncThunk(
         ...doc.data(),
       }));
 
-      // Client-side filtering for text fields (title, location)
+      // Step 4: Apply client-side filters (title, location)
       if (title) {
         const titleLower = title.toLowerCase();
-        jobs = jobs.filter(job => 
-          job.title && job.title.toLowerCase().includes(titleLower)
+        jobs = jobs.filter(
+          (job) => job.title && job.title.toLowerCase().includes(titleLower)
         );
       }
 
       if (location) {
         const locationLower = location.toLowerCase();
-        jobs = jobs.filter(job => 
-          job.location && job.location.toLowerCase().includes(locationLower)
+        jobs = jobs.filter(
+          (job) => job.location && job.location.toLowerCase().includes(locationLower)
         );
       }
 
-      thunkAPI.dispatch(setAllJobs(jobs));
-      return jobs;
+      // Step 5: Track last document for pagination
+      const newLastDoc = snapshot.docs[snapshot.docs.length - 1] || null;
+
+      // Step 6: Append or Replace
+      const prevJobs = thunkAPI.getState().job.allJobs;
+      if (loadMore) {
+        thunkAPI.dispatch(setAllJobs([...prevJobs, ...jobs])); // Append
+      } else {
+        thunkAPI.dispatch(setAllJobs(jobs)); // Replace
+      }
+
+      return { jobs, lastDoc: newLastDoc };
     } catch (error) {
       console.error("Failed to fetch jobs:", error);
       return thunkAPI.rejectWithValue("Failed to fetch jobs");
@@ -184,4 +192,3 @@ export const uploadProfilePic = createAsyncThunk(
     }
   }
 );
-
