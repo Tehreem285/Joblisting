@@ -133,10 +133,7 @@ const resetFilters = () => {
   setSalary("");
   setField("");
   setOrder("asc");
-
-  setLastDoc(null);
-  setHasMore(true);
-  loadJobs(false); // reset + fetch all
+  dispatch(fetchJobs({})); // reset + fetch all
 };
 
 // ✅ Initial fetch

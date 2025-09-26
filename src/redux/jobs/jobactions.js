@@ -89,7 +89,7 @@ export const fetchJobs = createAsyncThunk(
       // Step 2: Setup Firestore ref and constraints
       const jobsRef = collection(db, "jobs");
       let constraints = [];
-
+      //  if (title) constraints.push(where("title", "==", title.toLowerCase()));
       if (jobType) constraints.push(where("type", "==", jobType.toLowerCase()));
       if (salary) constraints.push(where("salary", ">=", Number(salary)));
 
