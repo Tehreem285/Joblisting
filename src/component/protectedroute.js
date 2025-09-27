@@ -27,6 +27,7 @@ const Protectedroute = ({ children }) => {
         dispatch(setUser({
           id: currentUser.uid,
           email: currentUser.email,
+          name: userData.name,
           profilePic: userData.profilePic || null,  // ✅ get profilePic safely
         }));
       } else {

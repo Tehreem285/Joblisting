@@ -19,12 +19,15 @@ import {
   Card,
   CardTitle,
   CardText,
+   UncontrolledDropdown,
+  DropdownToggle,
+  DropdownMenu,
+  DropdownItem,
 } from "reactstrap";
 import "./joblistings.css";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchJobs, uploadProfilePic } from "../redux/jobs/jobactions";
 import Addjob from "../component/addjob";
-import Userjobs from "../component/userjobs";
 import { logout } from "../redux/auth/authactions";
 import { setProfilePic } from "../redux/auth/authslice"; // ✅ import slice action
 const Joblistings = () => {
@@ -143,67 +146,69 @@ useEffect(() => {
   return (
     <>
       {/* Navbar */}
-      <div className="px-5 bg-dark py-2">
-        <Navbar color="dark" dark>
-          <NavbarBrand href="/" className="me-auto text-light">
-            <h4>JobsHub!</h4>
-          </NavbarBrand>
+<div className="px-5 bg-dark py-2">
+  <Navbar color="dark" dark expand="md" className="d-flex justify-content-between">
+    {/* Brand */}
+    <NavbarBrand href="/" className="text-light">
+      <h4>JobsHub!</h4>
+    </NavbarBrand>
 
-          {/* Profile Pic */}
-          <div className="d-flex align-items-center me-3">
-            <input
-              type="file"
-              id="profilePic"
-              accept="image/*"
-              style={{ display: "none" }}
-              onChange={handleProfilePicUpload}
-            />
-            <label
-              htmlFor="profilePic"
-              style={{ cursor: "pointer", margin: 0 }}
-            >
-              {imageurl || user?.profilePic ? (
-                <img
-                  src={imageurl || user?.profilePic}
-                  alt="Profile"
-                  style={{
-                    width: "40px",
-                    height: "40px",
-                    borderRadius: "50%",
-                    objectFit: "cover",
-                  }}
-                />
-              ) : (
-                <FaUserCircle size={40} color="gray" />
-              )}
-            </label>
-          </div>
+    {/* Username + Profile Dropdown */}
+    <div className="d-flex align-items-center">
+      {/* Username (always visible) */}
+      <span className="me-3 text-light fw-bold">
+        Hello, {user?.name}
+      </span>
 
-          {/* Navbar toggle */}
-          <NavbarToggler onClick={toggleNavbar} className="me-2" />
-          <Collapse isOpen={isOpen} navbar>
-            <Nav navbar className="ms-auto">
-              <NavItem>
-                <NavLink tag={Link} to="/userjobs">
-                  My Jobs
-                </NavLink>
-              </NavItem>
-              <NavItem>
-                <NavLink
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    dispatch(logout());
-                  }}
-                  className="text-danger"
-                >
-                  Logout
-                </NavLink>
-              </NavItem>
-            </Nav>
-          </Collapse>
-        </Navbar>
-      </div>
+      {/* Profile Dropdown */}
+      <UncontrolledDropdown inNavbar direction="down" className="d-flex align-items-center">
+  {/* Profile Pic (Upload Trigger) */}
+  <div className="me-2">
+    <label htmlFor="profileUpload" style={{ cursor: "pointer", marginBottom: 0 }}>
+      {user?.profilePic ? (
+        <img
+          src={user.profilePic}
+          alt="Profile"
+          style={{
+            width: "40px",
+            height: "40px",
+            borderRadius: "50%",
+            objectFit: "cover",
+          }}
+        />
+      ) : (
+        <FaUserCircle size={40} color="gray" />
+      )}
+    </label>
+    <input
+      type="file"
+      id="profileUpload"
+      accept="image/*"
+      style={{ display: "none" }}
+      onChange={handleProfilePicUpload}
+    />
+  </div>
+
+  {/* Dropdown (arrow only) */}
+  <DropdownToggle nav caret className="p-0 border-0 bg-transparent text-white" />
+
+  <DropdownMenu end>
+    <DropdownItem tag={Link} to="/userjobs">
+      My Jobs
+    </DropdownItem>
+    <DropdownItem divider />
+    <DropdownItem
+      onClick={() => dispatch(logout())}
+      className="text-danger"
+    >
+      Logout
+    </DropdownItem>
+  </DropdownMenu>
+</UncontrolledDropdown>
+    </div>
+  </Navbar>
+</div>
+
 
       {/* Hero Section */}
       <div>
@@ -340,51 +345,68 @@ useEffect(() => {
       </div>
 
       {/* Job Table */}
-      <div className="p-3 bg-secondary">
-        <Table light hover responsive>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Title</th>
-              <th>Location</th>
-              <th>Salary</th>
-              <th>IsActive</th>
-              <th>Type</th>
+      <div className="p-4 bg-light min-vh-100">
+  {/* Table Section */}
+  <div className="bg-white p-3 rounded shadow border">
+    <Table hover responsive className="align-middle">
+      <thead className="table-secondary">
+        <tr>
+          <th>#</th>
+          <th>Title</th>
+          <th>Location</th>
+          <th>Salary</th>
+          <th>Is Active</th>
+          <th>Type</th>
+        </tr>
+      </thead>
+      <tbody>
+        {jobs.length > 0 ? (
+          jobs.map((job, index) => (
+            <tr key={job.id}>
+              <td>{index + 1}</td>
+              <td className="fw-semibold">{job.title}</td>
+              <td>{job.location}</td>
+              <td>{job.salary}</td>
+              <td>
+                <span
+                  className={`badge ${
+                    job.isactive ? "bg-success" : "bg-danger"
+                  }`}
+                >
+                  {job.isactive ? "Yes" : "No"}
+                </span>
+              </td>
+              <td>{job.type}</td>
             </tr>
-          </thead>
-          <tbody>
-            {jobs.length > 0 ? (
-              jobs.map((job, index) => (
-                <tr key={job.id}>
-                  <td>{index + 1}</td>
-                  <td>{job.title}</td>
-                  <td>{job.location}</td>
-                  <td>{job.salary}</td>
-                  <td>{job.isactive ? "Yes" : "No"}</td>
-                  <td>{job.type}</td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="6" className="text-center">
-                  No jobs found.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </Table>
+          ))
+        ) : (
+          <tr>
+            <td colSpan="6" className="text-center text-muted">
+              No jobs found.
+            </td>
+          </tr>
+        )}
+      </tbody>
+    </Table>
 
-        {/* Load More */}
-        <div className="d-flex justify-content-center mt-3">
-          {hasMore ? (
-            <Button outline color="light" onClick={() => loadJobs(true)} disabled={loading}>
-              {loading ? "Loading..." : "Load More"}
-            </Button>
-          ) : (
-            <p className="text-center text-light">No more jobs</p>
-          )}
-        </div>
-      </div>
+    {/* Load More */}
+    <div className="d-flex justify-content-center mt-3">
+      {hasMore ? (
+        <Button
+          outline
+          color="dark"
+          onClick={() => loadJobs(true)}
+          disabled={loading}
+        >
+          {loading ? "Loading..." : "Load More"}
+        </Button>
+      ) : (
+        <p className="text-center text-muted">No more jobs</p>
+      )}
+    </div>
+  </div>
+</div>
+
 
       {/* Modals */}
       <Addjob modal={modal} toggle={toggle} />

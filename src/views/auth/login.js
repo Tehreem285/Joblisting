@@ -11,15 +11,12 @@ const [email, setEmail] = useState("");
 const [password, setPassword] = useState("");
 const dispatch = useDispatch()
  const navigate = useNavigate();
- const {loader} = useSelector((state)=> state.auth);
+ const {loginloader} = useSelector((state)=> state.auth);
 
   return (
     <>
     <div 
   style={{
-    backgroundImage: "url('/images/auth.jpg')",  // ✅ your image path
-    backgroundSize: "cover",                   // ✅ makes it cover the whole area
-    backgroundPosition: "center",              // ✅ keeps image centered
     minHeight: "100vh",                        // ✅ full height of screen
     display: "flex",
     justifyContent: "center",
@@ -34,7 +31,7 @@ const dispatch = useDispatch()
        <Form onSubmit={async (e) => {
   e.preventDefault();
   try {
-    await dispatch(login({ email, password })); // unwrap will throw if login failed
+    await dispatch(login({ email, password })).unwrap(); // unwrap will throw if login failed
     setEmail("");
     setPassword("");
     navigate('/'); // ✅ only navigate on success
@@ -68,7 +65,7 @@ const dispatch = useDispatch()
   </FormGroup>
   <div className="d-flex justify-content-center align-items-center">
   
-   <Button className='mt-5 bg-dark px-3 py-2'>{loader ? <Spinner color='light' size='sm'/> : "Login"}</Button>
+   <Button className='mt-5 bg-dark px-3 py-2'>{loginloader ? <Spinner color='light' size='sm'/> : "Login"}</Button>
    
   </div>
   </Form>

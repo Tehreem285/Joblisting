@@ -6,8 +6,9 @@ import { useSelector , useDispatch } from 'react-redux';
 
 
 const Signup = () => {
-  const {loader} = useSelector((state) => state.auth)
+  const {signuploader} = useSelector((state) => state.auth)
   const navigate = useNavigate();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const dispatch = useDispatch();
@@ -15,10 +16,7 @@ const Signup = () => {
   return (
     <>
     <div 
-  style={{
-    backgroundImage: "url('/images/auth.jpg')",  // ✅ your image path
-    backgroundSize: "cover",                   // ✅ makes it cover the whole area
-    backgroundPosition: "center",              // ✅ keeps image centered
+  style={{             // ✅ keeps image centered
     minHeight: "100vh",                        // ✅ full height of screen
     display: "flex",
     justifyContent: "center",
@@ -30,13 +28,25 @@ const Signup = () => {
         width: '25rem'
       }}>
     <h2 className='text-center mb-5'>Signup</h2>
-      <Form onSubmit={(e) => {
+      <Form onSubmit={async (e) => {
         e.preventDefault();
-          dispatch(signup({email , password}));
+          await dispatch(signup({name , email , password})).unwrap();
           setEmail("");
           setPassword("");
           navigate("/login");
       }}>
+  <FormGroup>
+    <Label for="exampleName">
+         Email
+       </Label>
+       <Input
+       required
+         placeholder="Name"
+         type="text"
+         value={name}
+         onChange={(e)=> setName(e.target.value)}
+       />
+     </FormGroup>
   <FormGroup>
     <Label for="exampleEmail">
          Email
@@ -63,7 +73,7 @@ const Signup = () => {
   </FormGroup>
   <div className="d-flex justify-content-center align-items-center">
  <Button className='mt-5 bg-dark px-3 py-2'>
-   {loader ? <Spinner color='light' size='sm'/> : "Signup" }
+   {signuploader ? <Spinner color='light' size='sm'/> : "Signup" }
    </Button>
   </div>
   </Form>
